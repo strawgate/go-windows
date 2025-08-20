@@ -30,6 +30,7 @@ import (
 //sys   _GetProcessMemoryInfo(handle syscall.Handle, psmemCounters *ProcessMemoryCountersEx, cb uint32) (err error) = psapi.GetProcessMemoryInfo
 //sys   _GetProcessImageFileNameA(handle syscall.Handle, imageFileName *byte, nSize uint32) (len uint32, err error) = psapi.GetProcessImageFileNameA
 //sys   _EnumProcesses(lpidProcess *uint32, cb uint32, lpcbNeeded *uint32) (err error) = psapi.EnumProcesses
+//sys   _GetPerformanceInfo(pi *PerformanceInformation, cb uint32) (err error) = psapi.GetPerformanceInfo
 
 var (
 	sizeofProcessMemoryCountersEx = uint32(unsafe.Sizeof(ProcessMemoryCountersEx{}))
@@ -97,4 +98,34 @@ func EnumProcesses() (pids []uint32, err error) {
 			return pids, nil
 		}
 	}
+}
+
+// PerformanceInformation represents the PERFORMANCE_INFORMATION structure
+type PerformanceInformation struct {
+	CB                uint32
+	CommitTotal       uintptr
+	CommitLimit       uintptr
+	CommitPeak        uintptr
+	PhysicalTotal     uintptr
+	PhysicalAvailable uintptr
+	SystemCache       uintptr
+	KernelTotal       uintptr
+	KernelPaged       uintptr
+	KernelNonpaged    uintptr
+	PageSize          uintptr
+	HandleCount       uint32
+	ProcessCount      uint32
+	ThreadCount       uint32
+}
+
+// GetPerformanceInfo retrieves performance information for the system
+// https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
+func GetPerformanceInfo() (PerformanceInformation, error) {
+	var pi PerformanceInformation
+	pi.CB = uint32(unsafe.Sizeof(pi))
+
+	if err := _GetPerformanceInfo(&pi, pi.CB); err != nil {
+		return PerformanceInformation{}, fmt.Errorf("GetPerformanceInfo failed: %w", err)
+	}
+	return pi, nil
 }
