@@ -21,6 +21,7 @@
 package windows
 
 import (
+	"slices"
 	"syscall"
 	"testing"
 	"unsafe"
@@ -120,12 +121,6 @@ func TestEnumProcesses(t *testing.T) {
 
 	// Verify that the current process is in the list
 	currentPID := uint32(syscall.Getpid())
-	found := false
-	for _, pid := range pids {
-		if pid == currentPID {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(pids, currentPID)
 	assert.True(t, found, "Current process PID should be in the returned list")
 }
